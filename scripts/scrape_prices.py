@@ -272,11 +272,23 @@ def _normalize_offer(o) -> Optional[dict]:
 # --- Retailer-specific parsers --------------------------------------------
 
 def parse_golfbox(html: str) -> Optional[dict]:
-    return parse_jsonld(html) or _golfbox_regex(html)
+    # Most golfbox.com.au products expose JSON-LD; some BigCommerce Stencil
+    # product pages only expose Open Graph / schema.org meta tags (e.g.
+    # FootJoy Pro/SL White/Blue/Red), so meta tags are checked second and the
+    # noisy regex is the last resort.
+    return (
+        parse_jsonld(html)
+        or _extract_meta_price(BeautifulSoup(html, "lxml"))
+        or _golfbox_regex(html)
+    )
 
 
 def parse_oncourse(html: str) -> Optional[dict]:
-    return parse_jsonld(html) or _golfbox_regex(html)
+    return (
+        parse_jsonld(html)
+        or _extract_meta_price(BeautifulSoup(html, "lxml"))
+        or _golfbox_regex(html)
+    )
 
 
 def _golfbox_regex(html: str) -> Optional[dict]:
@@ -294,35 +306,165 @@ def _golfbox_regex(html: str) -> Optional[dict]:
     }
 
 
+def _find_balanced_object(text: str, start: int) -> Optional[str]:
+    """Return the substring beginning at text[start] (which must be '{') and
+    ending at the matching '}', respecting JSON string literals."""
+    if start >= len(text) or text[start] != "{":
+        return None
+    depth = 0
+    in_str = False
+    escape = False
+    for i in range(start, len(text)):
+        c = text[i]
+        if escape:
+            escape = False
+            continue
+        if c == "\\":
+            escape = True
+            continue
+        if c == '"':
+            in_str = not in_str
+            continue
+        if in_str:
+            continue
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:i + 1]
+    return None
+
+
+def _extract_datalayer_product(html: str) -> Optional[dict]:
+    """FootJoy AU (Salesforce Commerce Cloud) embeds the price in a Google Tag
+    Manager dataLayer.push call:
+
+        dataLayer.push({"event":"productView","ecommerce":{"currencyCode":"AUD",
+            "detail":{"products":[{"id":"017PSL","price":299, ...}]}}});
+
+    Walk every dataLayer.push in the page, parse the object, and return the
+    first productView with a positive price."""
+    needle = "dataLayer.push("
+    idx = 0
+    while True:
+        i = html.find(needle, idx)
+        if i < 0:
+            return None
+        brace = html.find("{", i)
+        if brace < 0:
+            return None
+        body = _find_balanced_object(html, brace)
+        if not body:
+            idx = brace + 1
+            continue
+        try:
+            blob = json.loads(body)
+        except json.JSONDecodeError:
+            idx = brace + 1
+            continue
+        if isinstance(blob, dict) and blob.get("event") == "productView":
+            ecom = blob.get("ecommerce") or {}
+            detail = ecom.get("detail") or {}
+            products = detail.get("products") or []
+            if products and isinstance(products[0], dict):
+                p = products[0]
+                try:
+                    price = float(p.get("price")) if p.get("price") is not None else None
+                except (ValueError, TypeError):
+                    price = None
+                if price and price > 0:
+                    return {
+                        "price": price,
+                        "currency": (ecom.get("currencyCode") or "AUD").upper(),
+                        "in_stock": True,
+                        "on_sale": False,
+                        "price_was": None,
+                    }
+        idx = brace + 1
+
+
+def _extract_meta_price(soup: BeautifulSoup) -> Optional[dict]:
+    """Some themes expose the price via Open Graph or schema.org meta tags.
+
+    Recognises the BigCommerce Stencil pattern used by golfbox.com.au, where
+    the on-sale price lives in `product:price:amount` and the RRP lives in
+    `og:price:standard_amount`."""
+    meta = (
+        soup.select_one('meta[itemprop="price"]')
+        or soup.select_one('meta[property="product:price:amount"]')
+        or soup.select_one('meta[property="og:price:amount"]')
+    )
+    if not meta or not meta.get("content"):
+        return None
+    price = _to_float(meta["content"])
+    if price is None:
+        return None
+    curr_meta = (
+        soup.select_one('meta[itemprop="priceCurrency"]')
+        or soup.select_one('meta[property="product:price:currency"]')
+        or soup.select_one('meta[property="og:price:currency"]')
+    )
+    currency = (curr_meta.get("content") if curr_meta and curr_meta.get("content") else "AUD").upper()
+
+    # BigCommerce: og:price:standard_amount is the RRP; if it's higher, the
+    # current `price` is a sale price.
+    standard_meta = (
+        soup.select_one('meta[property="og:price:standard_amount"]')
+        or soup.select_one('meta[property="product:price:standard_amount"]')
+    )
+    standard = _to_float(standard_meta["content"]) if standard_meta and standard_meta.get("content") else None
+    on_sale = standard is not None and standard > price
+
+    return {
+        "price": price,
+        "currency": currency,
+        "in_stock": True,
+        "on_sale": on_sale,
+        "price_was": standard if on_sale else None,
+    }
+
+
 def parse_footjoy(html: str) -> Optional[dict]:
     soup = BeautifulSoup(html, "lxml")
 
-    sales = soup.select_one(".product-price .price-sales, .price-sales")
-    standard = soup.select_one(".product-price .price-standard, .price-standard")
-
-    sales_val = _to_float(sales.get_text(" ", strip=True)) if sales else None
-    standard_val = _to_float(standard.get_text(" ", strip=True)) if standard else None
-
-    # Try JSON-LD as a secondary path if HTML parse failed.
-    if sales_val is None:
-        ld = parse_jsonld(html)
-        if ld:
-            return ld
-        return None
-
-    on_sale = standard_val is not None and standard_val > sales_val
-
-    # Stock detection: presence of an "out of stock" message anywhere on the page.
+    # Stock detection (used by every successful path below).
     text_lc = soup.get_text(" ", strip=True).lower()
     in_stock = "out of stock" not in text_lc and "sold out" not in text_lc
 
-    return {
-        "price": sales_val,
-        "currency": "AUD",
-        "in_stock": in_stock,
-        "on_sale": on_sale,
-        "price_was": standard_val if on_sale else None,
-    }
+    # 1. Original .price-sales selector (kept for back-compat with older themes).
+    sales = soup.select_one(".product-price .price-sales, .price-sales")
+    standard = soup.select_one(".product-price .price-standard, .price-standard")
+    sales_val = _to_float(sales.get_text(" ", strip=True)) if sales else None
+    standard_val = _to_float(standard.get_text(" ", strip=True)) if standard else None
+    if sales_val is not None:
+        on_sale = standard_val is not None and standard_val > sales_val
+        return {
+            "price": sales_val,
+            "currency": "AUD",
+            "in_stock": in_stock,
+            "on_sale": on_sale,
+            "price_was": standard_val if on_sale else None,
+        }
+
+    # 2. dataLayer.push productView (current footjoy.com.au markup).
+    dl = _extract_datalayer_product(html)
+    if dl:
+        dl["in_stock"] = in_stock
+        return dl
+
+    # 3. Open Graph / schema.org meta tags.
+    mt = _extract_meta_price(soup)
+    if mt:
+        mt["in_stock"] = in_stock
+        return mt
+
+    # 4. JSON-LD as a final fallback.
+    ld = parse_jsonld(html)
+    if ld:
+        return ld
+
+    return None
 
 
 RETAILER_PARSERS = {
