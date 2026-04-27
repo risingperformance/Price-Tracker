@@ -1,7 +1,26 @@
 {
-  "timestamp_utc": "2026-04-27T22:00:14Z",
+  "timestamp_utc": "2026-04-27T11:32:54Z",
   "total_urls": 9,
-  "successes": 9,
-  "failures": 0,
-  "failure_details": []
+  "successes": 6,
+  "failures": 3,
+  "failure_details": [
+    {
+      "product": "Pro/SL",
+      "retailer": "Golf Box",
+      "url": "https://www.golfbox.com.au/shoes/footjoy-pro-sl-golf-shoes-white/blue/red/",
+      "error": "could not extract price from page"
+    },
+    {
+      "product": "Pro/SL",
+      "retailer": "FootJoy",
+      "url": "https://www.footjoy.com.au/en_AU/men/shoes/spikeless/prosl/017PSL.html?dwvar_017PSL_color=56949",
+      "error": "could not extract price from page"
+    },
+    {
+      "product": "Fuel",
+      "retailer": "FootJoy",
+      "url": "https://www.footjoy.com.au/en_AU/men/shoes/spikeless/fuel/008FJF.html?dwvar_008FJF_color=55417",
+      "error": "could not extract price from page"
+    }
+  ]
 }
