@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FootJoy AU Price Tracker</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <style>
+    :root {
+      --bg: #FAFAFA;
+      --surface: #FFFFFF;
+      --surface-2: #F5F5F7;
+      --border: #E6E6EA;
+      --text: #1A1A1F;
+      --text-muted: #6A6A75;
+      --accent: #0B5FFF;
+      --accent-soft: #E5EEFF;
+      --warn: #B45309;
+      --warn-bg: #FEF3C7;
+      --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.06);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    [data-theme="dark"] {
+      --bg: #0E0F12;
+      --surface: #16181D;
+      --surface-2: #1C1F26;
+      --border: #2A2D36;
+      --text: #ECECF1;
+      --text-muted: #9CA0AB;
+      --accent: #6CA0FF;
+      --accent-soft: #1B2A4A;
+      --warn: #FBBF24;
+      --warn-bg: #3F2F0F;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 24px 64px;
+    }
+
+    header.app {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    header.app h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+    header.app .meta {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    header.app .spacer { flex: 1; }
+    .icon-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .icon-btn:hover { background: var(--surface-2); }
+
+    .banner {
+      display: none;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      background: var(--warn-bg);
+      color: var(--warn);
+      font-size: 13px;
+      margin: 12px 0 0;
+      border: 1px solid color-mix(in srgb, var(--warn) 25%, transparent);
+    }
+    .banner.show { display: block; }
+
+    .toolbar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin: 20px 0 24px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    @media (min-width: 900px) {
+      .toolbar {
+        grid-template-columns: 1fr 1fr auto;
+        align-items: end;
+      }
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 8px; }
+    .filter-group label.title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .chip:hover { background: var(--accent-soft); }
+    .chip.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .segmented {
+      display: inline-flex;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px;
+    }
+    .segmented button {
+      background: transparent;
+      border: 0;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .segmented button.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow);
+    }
+
+    .chart-grid { display: grid; gap: 20px; grid-template-columns: 1fr; }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .chart-card h2 {
+      margin: 0 0 4px;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.005em;
+    }
+    .chart-card .sub {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+    .chart-card .head {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .chart-card .head .spacer { flex: 1; }
+    .chart-wrap { position: relative; height: 320px; }
+    .legend {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px 16px;
+      font-size: 13px;
+    }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+    .legend-row:hover { background: var(--surface-2); }
+    .legend-row.dim { opacity: 0.35; }
+    .swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex: 0 0 auto;
+    }
+    .legend-row .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .legend-row .price { font-variant-numeric: tabular-nums; font-weight: 500; }
+    .legend-row .delta { font-size: 12px; font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+    .delta.down { color: #16A34A; }
+    .delta.up { color: #DC2626; }
+    .delta.flat { color: var(--text-muted); }
+
+    .csv-btn {
+      font-size: 12px;
+      padding: 5px 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--text);
+    }
+    .csv-btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+    footer.app {
+      margin-top: 32px;
+      color: var(--text-muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .empty {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="app">
+      <h1>FootJoy AU Price Tracker</h1>
+      <div class="meta" id="lastUpdated">Loading...</div>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="themeToggle" title="Toggle dark mode">Dark mode</button>
+    </header>
+
+    <div id="banner" class="banner" role="alert"></div>
+
+    <section class="toolbar" id="toolbar" hidden>
+      <div class="filter-group">
+        <label class="title">Retailer</label>
+        <div class="chips" id="retailerChips"></div>
+      </div>
+      <div class="filter-group">
+        <label class="title">Brand</label>
+        <div class="chips" id="brandChips"></div>
+      </div>
+      <div class="filter-group">
+        <label class="title">Window</label>
+        <div class="segmented" id="rangeSeg">
+          <button data-range="7">7d</button>
+          <button data-range="30" class="active">30d</button>
+          <button data-range="90">90d</button>
+          <button data-range="all">All</button>
+        </div>
+      </div>
+    </section>
+
+    <main id="charts" class="chart-grid"></main>
+
+    <footer class="app">
+      <span id="footerLinks"></span>
+    </footer>
+  </div>
+
+  <script>
+  (function() {
+    "use strict";
+
+    const PRICES_URL = "data/prices.json";
+    const EXAMPLE_URL = "data/prices.example.json";
+    const LAST_RUN_URL = "data/last_run.json";
+
+    // Stable, perceptually-distinct palette (Tableau 10 inspired).
+    const PALETTE = [
+      "#0B5FFF", "#F58518", "#54A24B", "#E45756", "#72B7B2",
+      "#B279A2", "#FF9DA6", "#9D755D", "#BAB0AC", "#4C78A8",
+    ];
+
+    const state = {
+      data: [],
+      isExample: false,
+      lastRun: null,
+      retailers: [],
+      brands: [],
+      categories: [],
+      selectedRetailers: new Set(),
+      selectedBrands: new Set(),
+      range: "30",
+      seriesHidden: new Set(),
+      charts: new Map(),
+    };
+
+    // ---------- Theme ----------
+    function applyTheme() {
+      const stored = (location.hash.match(/theme=(\w+)/) || [])[1];
+      const prefDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const theme = stored || (prefDark ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+      document.getElementById("themeToggle").textContent = theme === "dark" ? "Light mode" : "Dark mode";
+    }
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute("data-theme");
+      const next = cur === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      document.getElementById("themeToggle").textContent = next === "dark" ? "Light mode" : "Dark mode";
+      writeUrlState({ theme: next });
+      // Re-render charts to pick up theme colors.
+      renderAllCharts();
+    }
+
+    // ---------- URL state ----------
+    function readUrlState() {
+      const h = location.hash.replace(/^#/, "");
+      if (!h) return {};
+      const out = {};
+      for (const part of h.split("&")) {
+        const [k, v] = part.split("=");
+        if (k && v != null) out[k] = decodeURIComponent(v);
+      }
+      return out;
+    }
+    function writeUrlState(updates) {
+      const cur = readUrlState();
+      Object.assign(cur, updates);
+      const ks = ["theme", "retailers", "brands", "range"];
+      const parts = [];
+      for (const k of ks) {
+        if (cur[k]) parts.push(`${k}=${encodeURIComponent(cur[k])}`);
+      }
+      history.replaceState(null, "", parts.length ? `#${parts.join("&")}` : "#");
+    }
+
+    // ---------- Data load ----------
+    async function loadData() {
+      let rows = [];
+      try {
+        const r = await fetch(PRICES_URL, { cache: "no-store" });
+        if (r.ok) rows = await r.json();
+      } catch (_) {}
+      if (!rows || rows.length === 0) {
+        state.isExample = true;
+        try {
+          const r = await fetch(EXAMPLE_URL, { cache: "no-store" });
+          if (r.ok) rows = await r.json();
+        } catch (_) {}
+      }
+      state.data = rows || [];
+
+      try {
+        const r = await fetch(LAST_RUN_URL, { cache: "no-store" });
+        if (r.ok) state.lastRun = await r.json();
+      } catch (_) {}
+    }
+
+    // ---------- Banner ----------
+    function updateBanner() {
+      const banner = document.getElementById("banner");
+      const messages = [];
+
+      if (state.isExample) {
+        messages.push("Showing demo data. The first scheduled scrape will replace this with real prices.");
+      }
+
+      const lr = state.lastRun;
+      if (!state.isExample && lr) {
+        const ts = new Date(lr.timestamp_utc);
+        const ageH = (Date.now() - ts.getTime()) / 36e5;
+        if (ageH > 36) {
+          messages.push(`Latest scrape is ${Math.round(ageH)} hours old. The daily job may be stuck.`);
+        }
+        if (lr.failures > 0) {
+          messages.push(`Last scrape had ${lr.failures} failure${lr.failures === 1 ? "" : "s"} (out of ${lr.total_urls}).`);
+        }
+      }
+
+      if (messages.length) {
+        banner.textContent = messages.join(" ");
+        banner.classList.add("show");
+      } else {
+        banner.classList.remove("show");
+      }
+    }
+
+    function updateLastUpdated() {
+      const el = document.getElementById("lastUpdated");
+      if (state.isExample) {
+        el.textContent = "Demo data";
+        return;
+      }
+      if (!state.lastRun) {
+        el.textContent = "No run yet";
+        return;
+      }
+      const ts = new Date(state.lastRun.timestamp_utc);
+      const fmt = ts.toLocaleString(undefined, {
+        weekday: "short", day: "numeric", month: "short",
+        hour: "2-digit", minute: "2-digit",
+      });
+      el.textContent = `Last updated ${fmt}`;
+    }
+
+    // ---------- Filters ----------
+    function buildFilters() {
+      const retSet = new Set(), brandSet = new Set(), catList = [];
+      const seenCat = new Set();
+      for (const r of state.data) {
+        retSet.add(r.retailer);
+        brandSet.add(r.brand);
+        if (!seenCat.has(r.category)) { seenCat.add(r.category); catList.push(r.category); }
+      }
+      state.retailers = [...retSet].sort();
+      state.brands = [...brandSet].sort();
+      state.categories = catList;
+
+      const url = readUrlState();
+      const initRet = url.retailers ? url.retailers.split(",") : state.retailers;
+      const initBrand = url.brands ? url.brands.split(",") : state.brands;
+      state.selectedRetailers = new Set(initRet.filter(x => state.retailers.includes(x)));
+      state.selectedBrands = new Set(initBrand.filter(x => state.brands.includes(x)));
+      if (state.selectedRetailers.size === 0) state.selectedRetailers = new Set(state.retailers);
+      if (state.selectedBrands.size === 0) state.selectedBrands = new Set(state.brands);
+      if (url.range) state.range = url.range;
+    }
+    function renderChips(containerId, items, selected, onToggle) {
+      const wrap = document.getElementById(containerId);
+      wrap.innerHTML = "";
+      for (const it of items) {
+        const chip = document.createElement("div");
+        chip.className = "chip" + (selected.has(it) ? " active" : "");
+        chip.textContent = it;
+        chip.addEventListener("click", () => {
+          if (selected.has(it)) selected.delete(it); else selected.add(it);
+          if (selected.size === 0) {
+            // Don't allow no selection — re-add the one just removed.
+            selected.add(it);
+          }
+          chip.classList.toggle("active");
+          onToggle();
+        });
+        wrap.appendChild(chip);
+      }
+    }
+    function renderToolbar() {
+      document.getElementById("toolbar").hidden = false;
+      renderChips("retailerChips", state.retailers, state.selectedRetailers, onFilterChange);
+      renderChips("brandChips", state.brands, state.selectedBrands, onFilterChange);
+      const seg = document.getElementById("rangeSeg");
+      for (const btn of seg.querySelectorAll("button")) {
+        btn.classList.toggle("active", btn.dataset.range === state.range);
+        btn.onclick = () => {
+          state.range = btn.dataset.range;
+          for (const b of seg.querySelectorAll("button")) b.classList.toggle("active", b === btn);
+          writeUrlState({ range: state.range });
+          renderAllCharts();
+        };
+      }
+    }
+    function onFilterChange() {
+      writeUrlState({
+        retailers: [...state.selectedRetailers].join(","),
+        brands: [...state.selectedBrands].join(","),
+      });
+      renderAllCharts();
+    }
+
+    // ---------- Filtering / shaping ----------
+    function rangeStart() {
+      if (state.range === "all") return null;
+      const days = parseInt(state.range, 10);
+      const d = new Date();
+      d.setDate(d.getDate() - days + 1);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    function filteredRows() {
+      const start = rangeStart();
+      return state.data.filter(r =>
+        state.selectedRetailers.has(r.retailer) &&
+        state.selectedBrands.has(r.brand) &&
+        (start == null || new Date(r.date) >= start)
+      );
+    }
+    function groupByCategory(rows) {
+      const out = new Map();
+      for (const r of rows) {
+        if (!out.has(r.category)) out.set(r.category, []);
+        out.get(r.category).push(r);
+      }
+      // Preserve original category order
+      const ordered = new Map();
+      for (const c of state.categories) {
+        if (out.has(c)) ordered.set(c, out.get(c));
+      }
+      return ordered;
+    }
+    function buildSeries(rows) {
+      const map = new Map();
+      for (const r of rows) {
+        const key = `${r.product} — ${r.retailer}`;
+        if (!map.has(key)) map.set(key, { product: r.product, retailer: r.retailer, brand: r.brand, points: [] });
+        map.get(key).points.push({
+          x: r.date,
+          y: r.price,
+          on_sale: r.on_sale,
+          in_stock: r.in_stock,
+          price_was: r.price_was,
+        });
+      }
+      for (const s of map.values()) s.points.sort((a, b) => a.x.localeCompare(b.x));
+      return [...map.values()].sort((a, b) => a.product.localeCompare(b.product) || a.retailer.localeCompare(b.retailer));
+    }
+
+    // ---------- Charts ----------
+    function themeColors() {
+      const cs = getComputedStyle(document.documentElement);
+      return {
+        text: cs.getPropertyValue("--text").trim() || "#1A1A1F",
+        muted: cs.getPropertyValue("--text-muted").trim() || "#6A6A75",
+        border: cs.getPropertyValue("--border").trim() || "#E6E6EA",
+        surface: cs.getPropertyValue("--surface").trim() || "#FFFFFF",
+      };
+    }
+
+    function renderAllCharts() {
+      const grid = document.getElementById("charts");
+      const rows = filteredRows();
+      const grouped = groupByCategory(rows);
+
+      if (grouped.size === 0) {
+        grid.innerHTML = `<div class="empty">No data for the current filter selection.</div>`;
+        for (const c of state.charts.values()) c.destroy();
+        state.charts.clear();
+        return;
+      }
+
+      // Remove cards no longer present
+      const want = new Set(grouped.keys());
+      for (const c of grid.querySelectorAll("[data-cat]")) {
+        if (!want.has(c.dataset.cat)) c.remove();
+      }
+      for (const [cat, _] of grouped) {
+        let card = grid.querySelector(`[data-cat="${cssEscape(cat)}"]`);
+        if (!card) {
+          card = makeCard(cat);
+          grid.appendChild(card);
+        }
+      }
+
+      for (const [cat, catRows] of grouped) {
+        renderCategory(cat, catRows);
+      }
+    }
+
+    function cssEscape(s) {
+      return (window.CSS && CSS.escape) ? CSS.escape(s) : s.replace(/"/g, "&quot;");
+    }
+
+    function makeCard(category) {
+      const card = document.createElement("section");
+      card.className = "chart-card";
+      card.dataset.cat = category;
+      card.innerHTML = `
+        <div class="head">
+          <div>
+            <h2></h2>
+            <div class="sub"></div>
+          </div>
+          <div class="spacer"></div>
+          <button class="csv-btn">Export CSV</button>
+        </div>
+        <div class="chart-wrap"><canvas></canvas></div>
+        <div class="legend"></div>
+      `;
+      card.querySelector("h2").textContent = category;
+      return card;
+    }
+
+    function renderCategory(category, rows) {
+      const grid = document.getElementById("charts");
+      const card = grid.querySelector(`[data-cat="${cssEscape(category)}"]`);
+      const series = buildSeries(rows);
+
+      const colors = {};
+      series.forEach((s, i) => { colors[`${s.product} — ${s.retailer}`] = PALETTE[i % PALETTE.length]; });
+
+      // Description
+      card.querySelector(".sub").textContent =
+        `${series.length} line${series.length === 1 ? "" : "s"} across ${new Set(series.map(s => s.retailer)).size} retailer${new Set(series.map(s => s.retailer)).size === 1 ? "" : "s"}`;
+
+      // Chart
+      const canvas = card.querySelector("canvas");
+      let chart = state.charts.get(category);
+      const t = themeColors();
+
+      const datasets = series.map(s => {
+        const key = `${s.product} — ${s.retailer}`;
+        const color = colors[key];
+        return {
+          label: key,
+          data: s.points,
+          borderColor: color,
+          backgroundColor: color,
+          borderWidth: 2,
+          pointRadius: ctx => ctx.raw && ctx.raw.on_sale ? 4 : 2,
+          pointHoverRadius: 5,
+          pointBackgroundColor: ctx => ctx.raw && ctx.raw.on_sale ? color : color,
+          pointBorderColor: ctx => ctx.raw && ctx.raw.on_sale ? "#FFFFFF" : color,
+          tension: 0.2,
+          spanGaps: true,
+          hidden: state.seriesHidden.has(key),
+          _meta: { product: s.product, retailer: s.retailer, brand: s.brand },
+        };
+      });
+
+      const config = {
+        type: "line",
+        data: { datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "nearest", intersect: false },
+          scales: {
+            x: {
+              type: "time",
+              time: { unit: "day", displayFormats: { day: "d MMM" } },
+              grid: { color: t.border, drawBorder: false },
+              ticks: { color: t.muted, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+            },
+            y: {
+              grid: { color: t.border, drawBorder: false },
+              ticks: {
+                color: t.muted,
+                callback: v => `$${Number(v).toFixed(0)}`,
+              },
+            },
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: t.surface,
+              titleColor: t.text,
+              bodyColor: t.text,
+              borderColor: t.border,
+              borderWidth: 1,
+              padding: 10,
+              boxPadding: 4,
+              callbacks: {
+                title: (items) => {
+                  const d = new Date(items[0].parsed.x);
+                  return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+                },
+                label: (ctx) => {
+                  const r = ctx.raw;
+                  const meta = ctx.dataset._meta;
+                  const parts = [`${meta.product} — ${meta.retailer}`, `${meta.brand}`, `$${Number(r.y).toFixed(2)} AUD`];
+                  if (r.on_sale && r.price_was) parts.push(`On sale (was $${Number(r.price_was).toFixed(2)})`);
+                  if (r.in_stock === false) parts.push("Out of stock");
+                  return parts;
+                },
+              },
+            },
+          },
+        },
+      };
+
+      if (chart) {
+        chart.data = config.data;
+        chart.options = config.options;
+        chart.update();
+      } else {
+        chart = new Chart(canvas.getContext("2d"), config);
+        state.charts.set(category, chart);
+      }
+
+      renderLegend(card, series, colors, chart);
+      bindCsv(card, category, series);
+    }
+
+    function renderLegend(card, series, colors, chart) {
+      const wrap = card.querySelector(".legend");
+      wrap.innerHTML = "";
+      series.forEach((s) => {
+        const key = `${s.product} — ${s.retailer}`;
+        const points = s.points;
+        if (!points.length) return;
+        const last = points[points.length - 1];
+        const first = points[0];
+        const change = first.y > 0 ? ((last.y - first.y) / first.y) * 100 : 0;
+        const cls = change < -0.5 ? "down" : change > 0.5 ? "up" : "flat";
+        const sign = change > 0 ? "+" : "";
+        const row = document.createElement("div");
+        row.className = "legend-row" + (state.seriesHidden.has(key) ? " dim" : "");
+        row.innerHTML = `
+          <span class="swatch" style="background:${colors[key]}"></span>
+          <span class="name" title="${escapeHtml(key)}">${escapeHtml(key)}</span>
+          <span class="price">$${Number(last.y).toFixed(2)}</span>
+          <span class="delta ${cls}">${sign}${change.toFixed(1)}%</span>
+        `;
+        row.addEventListener("click", () => {
+          if (state.seriesHidden.has(key)) state.seriesHidden.delete(key);
+          else state.seriesHidden.add(key);
+          // Find dataset index in chart and toggle visibility
+          const idx = chart.data.datasets.findIndex(d => d.label === key);
+          if (idx >= 0) {
+            chart.setDatasetVisibility(idx, !state.seriesHidden.has(key));
+            chart.update();
+          }
+          row.classList.toggle("dim", state.seriesHidden.has(key));
+        });
+        wrap.appendChild(row);
+      });
+    }
+
+    function bindCsv(card, category, series) {
+      const btn = card.querySelector(".csv-btn");
+      btn.onclick = () => exportCsv(category, series);
+    }
+
+    function exportCsv(category, series) {
+      const head = ["date","category","brand","product","retailer","price","price_was","currency","on_sale","in_stock"];
+      const lines = [head.join(",")];
+      for (const s of series) {
+        for (const p of s.points) {
+          const row = [
+            p.x, category, s.brand, s.product, s.retailer,
+            p.y, p.price_was ?? "", "AUD",
+            p.on_sale ? "true" : "false",
+            p.in_stock === false ? "false" : "true",
+          ];
+          lines.push(row.map(csvCell).join(","));
+        }
+      }
+      const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `prices-${slug(category)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    function csvCell(v) {
+      const s = String(v ?? "");
+      if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    }
+    function slug(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+    function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+
+    function renderFooter() {
+      const f = document.getElementById("footerLinks");
+      f.innerHTML = `Built for FootJoy AU competitive intelligence. Data scraped daily via GitHub Actions.`;
+    }
+
+    // ---------- Init ----------
+    async function init() {
+      applyTheme();
+      document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+
+      await loadData();
+      updateLastUpdated();
+      updateBanner();
+
+      if (!state.data.length) {
+        document.getElementById("charts").innerHTML =
+          `<div class="empty">No price data yet. The first GitHub Actions run will populate the dashboard.</div>`;
+        renderFooter();
+        return;
+      }
+
+      buildFilters();
+      renderToolbar();
+      renderAllCharts();
+      renderFooter();
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>
