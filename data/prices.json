@@ -1,7 +1,7 @@
 [
   {
     "date": "2026-04-27",
-    "timestamp_utc": "2026-04-27T11:32:54Z",
+    "timestamp_utc": "2026-04-27T11:52:51Z",
     "category": "Premium Performance Spikeless",
     "brand": "Adidas",
     "product": "Adizero ZG Spikeless",
@@ -17,7 +17,7 @@
   },
   {
     "date": "2026-04-27",
-    "timestamp_utc": "2026-04-27T11:32:54Z",
+    "timestamp_utc": "2026-04-27T11:52:51Z",
     "category": "Premium Performance Spikeless",
     "brand": "Adidas",
     "product": "Adizero ZG Spikeless",
@@ -33,7 +33,7 @@
   },
   {
     "date": "2026-04-27",
-    "timestamp_utc": "2026-04-27T11:32:54Z",
+    "timestamp_utc": "2026-04-27T11:52:51Z",
     "category": "Premium Performance Spikeless",
     "brand": "Ecco",
     "product": "Biom C5 BOA",
@@ -49,7 +49,7 @@
   },
   {
     "date": "2026-04-27",
-    "timestamp_utc": "2026-04-27T11:32:54Z",
+    "timestamp_utc": "2026-04-27T11:52:51Z",
     "category": "Premium Performance Spikeless",
     "brand": "Ecco",
     "product": "Biom C5 BOA",
@@ -65,7 +65,7 @@
   },
   {
     "date": "2026-04-27",
-    "timestamp_utc": "2026-04-27T11:32:54Z",
+    "timestamp_utc": "2026-04-27T11:52:51Z",
     "category": "Premium Performance Spikeless",
     "brand": "UA",
     "product": "Drive Pro Clon SL",
@@ -81,7 +81,7 @@
   },
   {
     "date": "2026-04-27",
-    "timestamp_utc": "2026-04-27T11:32:54Z",
+    "timestamp_utc": "2026-04-27T11:52:51Z",
     "category": "Performance Spikeless",
     "brand": "FootJoy",
     "product": "Fuel",
@@ -91,6 +91,22 @@
     "price_was": null,
     "currency": "AUD",
     "on_sale": false,
+    "in_stock": true,
+    "status": "ok",
+    "error": null
+  },
+  {
+    "date": "2026-04-27",
+    "timestamp_utc": "2026-04-27T11:52:51Z",
+    "category": "Premium Performance Spikeless",
+    "brand": "FootJoy",
+    "product": "Pro/SL",
+    "retailer": "Golf Box",
+    "url": "https://www.golfbox.com.au/shoes/footjoy-pro-sl-golf-shoes-white/blue/red/",
+    "price": 239.99,
+    "price_was": 299.99,
+    "currency": "AUD",
+    "on_sale": true,
     "in_stock": true,
     "status": "ok",
     "error": null
