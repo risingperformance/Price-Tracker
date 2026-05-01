@@ -1,15 +1,9 @@
 {
-  "timestamp_utc": "2026-04-27T11:32:54Z",
+  "timestamp_utc": "2026-05-01T11:12:32Z",
   "total_urls": 9,
-  "successes": 6,
-  "failures": 3,
+  "successes": 7,
+  "failures": 2,
   "failure_details": [
-    {
-      "product": "Pro/SL",
-      "retailer": "Golf Box",
-      "url": "https://www.golfbox.com.au/shoes/footjoy-pro-sl-golf-shoes-white/blue/red/",
-      "error": "could not extract price from page"
-    },
     {
       "product": "Pro/SL",
       "retailer": "FootJoy",

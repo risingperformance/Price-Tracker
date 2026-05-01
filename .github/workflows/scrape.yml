@@ -2,8 +2,10 @@ name: Scrape prices daily
 
 on:
   schedule:
-    # 22:00 UTC = 08:00 AEST (no DST in QLD; AEDT states will see 09:00).
-    - cron: "0 22 * * *"
+    # 22:17 UTC = 08:17 AEST (no DST in QLD; AEDT states will see 09:17).
+    # Off-hour minute on purpose: GitHub Actions cron is congested at the top
+    # of every hour and frequently delays or drops :00 / :15 / :30 / :45 runs.
+    - cron: "17 22 * * *"
   workflow_dispatch:
 
 permissions:
