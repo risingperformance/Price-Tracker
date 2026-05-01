@@ -73,6 +73,7 @@ class Product:
     product: str
     retailer: str
     url: str
+    rrp: Optional[float] = None
 
 
 @dataclass
@@ -86,6 +87,7 @@ class PricePoint:
     url: str
     price: Optional[float]
     price_was: Optional[float]
+    rrp: Optional[float]
     currency: str
     on_sale: bool
     in_stock: bool
@@ -108,6 +110,7 @@ def load_products(sheet_path: Path) -> list[Product]:
         raise RuntimeError(f"Sheet1 missing columns: {missing}")
 
     idx = {h: headers.index(h) for h in required}
+    rrp_idx = headers.index("RRP") if "RRP" in headers else None
     out: list[Product] = []
     for row in ws.iter_rows(min_row=2, values_only=True):
         if not row or all(v is None for v in row):
@@ -116,6 +119,15 @@ def load_products(sheet_path: Path) -> list[Product]:
         url = row[idx["URL"]]
         if not category or not url:
             continue
+        rrp_val: Optional[float] = None
+        if rrp_idx is not None and rrp_idx < len(row):
+            raw = row[rrp_idx]
+            if raw is not None and str(raw).strip() != "":
+                try:
+                    rrp_val = float(str(raw).replace("$", "").replace(",", "").strip())
+                except ValueError:
+                    log.warning("Unparseable RRP %r for %s — skipping", raw, url)
+                    rrp_val = None
         out.append(
             Product(
                 category=str(category).strip(),
@@ -123,6 +135,7 @@ def load_products(sheet_path: Path) -> list[Product]:
                 product=str(row[idx["Product Name"]] or "").strip(),
                 retailer=str(row[idx["Retailer"]] or "").strip(),
                 url=str(url).strip(),
+                rrp=rrp_val,
             )
         )
     log.info("Loaded %d products from %s", len(out), sheet_path.name)
@@ -591,6 +604,7 @@ def main() -> int:
                 url=p.url,
                 price=result["price"],
                 price_was=result.get("price_was"),
+                rrp=p.rrp,
                 currency=result.get("currency", "AUD"),
                 on_sale=bool(result.get("on_sale")),
                 in_stock=bool(result.get("in_stock", True)),
@@ -614,6 +628,7 @@ def main() -> int:
                     url=p.url,
                     price=prev["price"],
                     price_was=prev.get("price_was"),
+                    rrp=p.rrp,
                     currency=prev.get("currency", "AUD"),
                     on_sale=bool(prev.get("on_sale")),
                     in_stock=False,
