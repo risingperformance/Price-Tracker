@@ -531,15 +531,27 @@
       for (const r of rows) {
         const key = `${r.product} — ${r.retailer}`;
         if (!map.has(key)) map.set(key, { product: r.product, retailer: r.retailer, brand: r.brand, points: [] });
+        // Discount % off RRP. Requires a valid RRP > 0 and a price; otherwise
+        // the point is dropped so the series only shows points we can compute.
+        const rrp = (typeof r.rrp === "number" && r.rrp > 0) ? r.rrp : null;
+        const price = (typeof r.price === "number") ? r.price : null;
+        if (rrp == null || price == null) continue;
+        const discount = ((rrp - price) / rrp) * 100;
         map.get(key).points.push({
           x: r.date,
-          y: r.price,
+          y: discount,
+          price: price,
+          rrp: rrp,
           on_sale: r.on_sale,
           in_stock: r.in_stock,
           price_was: r.price_was,
         });
       }
-      for (const s of map.values()) s.points.sort((a, b) => a.x.localeCompare(b.x));
+      // Drop any series that ended up with no plottable points (RRP missing).
+      for (const [k, s] of [...map.entries()]) {
+        if (!s.points.length) map.delete(k);
+        else s.points.sort((a, b) => a.x.localeCompare(b.x));
+      }
       return [...map.values()].sort((a, b) => a.product.localeCompare(b.product) || a.retailer.localeCompare(b.retailer));
     }
 
@@ -617,8 +629,14 @@
       series.forEach((s, i) => { colors[`${s.product} — ${s.retailer}`] = PALETTE[i % PALETTE.length]; });
 
       // Description
-      card.querySelector(".sub").textContent =
-        `${series.length} line${series.length === 1 ? "" : "s"} across ${new Set(series.map(s => s.retailer)).size} retailer${new Set(series.map(s => s.retailer)).size === 1 ? "" : "s"}`;
+      const sub = card.querySelector(".sub");
+      if (series.length === 0) {
+        sub.textContent = "No discount data yet — add an RRP for these products in the spreadsheet.";
+      } else {
+        const retailers = new Set(series.map(s => s.retailer));
+        sub.textContent =
+          `${series.length} line${series.length === 1 ? "" : "s"} across ${retailers.size} retailer${retailers.size === 1 ? "" : "s"}`;
+      }
 
       // Chart
       const canvas = card.querySelector("canvas");
@@ -661,9 +679,11 @@
             },
             y: {
               grid: { color: t.border, drawBorder: false },
+              beginAtZero: true,
+              title: { display: true, text: "Discount (% off RRP)", color: t.muted },
               ticks: {
                 color: t.muted,
-                callback: v => `$${Number(v).toFixed(0)}`,
+                callback: v => `${Number(v).toFixed(0)}%`,
               },
             },
           },
@@ -685,8 +705,13 @@
                 label: (ctx) => {
                   const r = ctx.raw;
                   const meta = ctx.dataset._meta;
-                  const parts = [`${meta.product} — ${meta.retailer}`, `${meta.brand}`, `$${Number(r.y).toFixed(2)} AUD`];
-                  if (r.on_sale && r.price_was) parts.push(`On sale (was $${Number(r.price_was).toFixed(2)})`);
+                  const parts = [
+                    `${meta.product} — ${meta.retailer}`,
+                    `${meta.brand}`,
+                    `${Number(r.y).toFixed(1)}% off RRP`,
+                    `Price $${Number(r.price).toFixed(2)} (RRP $${Number(r.rrp).toFixed(2)})`,
+                  ];
+                  if (r.on_sale && r.price_was) parts.push(`Sale tag (was $${Number(r.price_was).toFixed(2)})`);
                   if (r.in_stock === false) parts.push("Out of stock");
                   return parts;
                 },
@@ -718,16 +743,18 @@
         if (!points.length) return;
         const last = points[points.length - 1];
         const first = points[0];
-        const change = first.y > 0 ? ((last.y - first.y) / first.y) * 100 : 0;
-        const cls = change < -0.5 ? "down" : change > 0.5 ? "up" : "flat";
-        const sign = change > 0 ? "+" : "";
+        // Change is in percentage points (e.g. went from 10% off to 25% off = +15 pp).
+        // A bigger discount today than at the start is "down" in price terms (good for hunters).
+        const changePp = last.y - first.y;
+        const cls = changePp > 0.5 ? "down" : changePp < -0.5 ? "up" : "flat";
+        const sign = changePp > 0 ? "+" : "";
         const row = document.createElement("div");
         row.className = "legend-row" + (state.seriesHidden.has(key) ? " dim" : "");
         row.innerHTML = `
           <span class="swatch" style="background:${colors[key]}"></span>
           <span class="name" title="${escapeHtml(key)}">${escapeHtml(key)}</span>
-          <span class="price">$${Number(last.y).toFixed(2)}</span>
-          <span class="delta ${cls}">${sign}${change.toFixed(1)}%</span>
+          <span class="price">${Number(last.y).toFixed(1)}%</span>
+          <span class="delta ${cls}">${sign}${changePp.toFixed(1)} pp</span>
         `;
         row.addEventListener("click", () => {
           if (state.seriesHidden.has(key)) state.seriesHidden.delete(key);
@@ -750,13 +777,14 @@
     }
 
     function exportCsv(category, series) {
-      const head = ["date","category","brand","product","retailer","price","price_was","currency","on_sale","in_stock"];
+      const head = ["date","category","brand","product","retailer","price","rrp","discount_pct","price_was","currency","on_sale","in_stock"];
       const lines = [head.join(",")];
       for (const s of series) {
         for (const p of s.points) {
           const row = [
             p.x, category, s.brand, s.product, s.retailer,
-            p.y, p.price_was ?? "", "AUD",
+            p.price, p.rrp, Number(p.y).toFixed(2),
+            p.price_was ?? "", "AUD",
             p.on_sale ? "true" : "false",
             p.in_stock === false ? "false" : "true",
           ];
