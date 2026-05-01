@@ -464,6 +464,23 @@ def parse_footjoy(html: str) -> Optional[dict]:
     if ld:
         return ld
 
+    # Diagnostic: when every path failed, log signals about what the runner
+    # actually received so we can tell whether it's a Cloudflare challenge,
+    # a geo redirect, or a real page with markup we don't recognise yet.
+    title_tag = soup.select_one("title")
+    title_text = title_tag.get_text(strip=True) if title_tag else "<no title>"
+    log.warning(
+        "parse_footjoy: no price found. len=%d title=%r datalayer=%s "
+        "productView=%s price-sales=%s og:price=%s ld+json=%s",
+        len(html),
+        title_text[:120],
+        "dataLayer.push" in html,
+        '"productView"' in html,
+        "price-sales" in html,
+        'property="product:price:amount"' in html or 'property="og:price:amount"' in html,
+        "application/ld+json" in html,
+    )
+    log.warning("parse_footjoy: head snippet: %s", html[:600].replace("\n", " ")[:600])
     return None
 
 
