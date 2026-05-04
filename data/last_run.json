@@ -1,7 +1,272 @@
 {
-  "timestamp_utc": "2026-05-04T07:46:26Z",
-  "total_urls": 8,
-  "successes": 8,
-  "failures": 0,
-  "failure_details": []
+  "timestamp_utc": "2026-05-04T08:08:27Z",
+  "total_urls": 61,
+  "successes": 17,
+  "failures": 44,
+  "failure_details": [
+    {
+      "product": "SM11 wedge (std spec)",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/titleist-vokey-sm11-wedge-steel-rh",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "SM11 wedge (std spec)",
+      "retailer": "Drummond Golf",
+      "url": "https://drummondgolf.com.au/products/titleist-vokey-sm11-chrome-wedge?variant=51228187984167",
+      "error": "no parser registered for retailer 'Drummond Golf'"
+    },
+    {
+      "product": "SM11 wedge (std spec)",
+      "retailer": "Golf Box",
+      "url": "https://www.golfbox.com.au/clubs/titleist-vokey-sm11-wedge-tour-chrome/",
+      "error": "could not extract price from page"
+    },
+    {
+      "product": "SC Newport 2",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/scotty-cameron-2025-select-putters-rh?variant=46361594396886",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "SC Newport 2",
+      "retailer": "Drummond Golf",
+      "url": "https://drummondgolf.com.au/products/scotty-cameron-2025-newport-2-putter-1",
+      "error": "no parser registered for retailer 'Drummond Golf'"
+    },
+    {
+      "product": "SC Newport 2",
+      "retailer": "Golf Box",
+      "url": "https://www.golfbox.com.au/clubs/scotty-cameron-super-select-2025-putter-newport-2/",
+      "error": "could not extract price from page"
+    },
+    {
+      "product": "Pro V1",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/titleist-2025-prov1-golf-balls?variant=46361612517590",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "Pro V1",
+      "retailer": "Drummond Golf",
+      "url": "https://drummondgolf.com.au/products/ti-ball-25-pro-v1-wht-12pk",
+      "error": "no parser registered for retailer 'Drummond Golf'"
+    },
+    {
+      "product": "Pro V1",
+      "retailer": "Golf Box",
+      "url": "https://www.golfbox.com.au/balls/titleist-pro-v1-2025-golf-balls/",
+      "error": "could not extract price from page"
+    },
+    {
+      "product": "Premium Tour Stand Bag",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/titleist-2024-premium-tour-stand-bag",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "Premium Tour Stand Bag",
+      "retailer": "Golf Box",
+      "url": "https://www.golfbox.com.au/titleist-tour-2024-stand-bag-black-white/",
+      "error": "could not extract price from page"
+    },
+    {
+      "product": "T250 Iron (std spec)",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/titleist-t250-4g-irons-custom-web",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "T250 Iron (std spec)",
+      "retailer": "Drummond Golf",
+      "url": "https://drummondgolf.com.au/products/titleist-2025-t250-steel-iron-rh",
+      "error": "no parser registered for retailer 'Drummond Golf'"
+    },
+    {
+      "product": "Quantum Max Driver",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/callaway-quantum-max-driver-custom",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "Qi4D Driver",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/taylormade-qi4d-driver-custom-web",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "G440K Driver",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/ping-g440k-driver-custom-web",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "Chrome Soft",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/callaway-2026-chrome-soft-golf-balls",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "Forrester Cart Bag",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/callaway-2025-forrester-cart-bag",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "TP5",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/taylormade-2026-tp5-golf-balls",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "244 DLX Cart Ba",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/ping-dlx-244-cart-bag",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "Hyperflex",
+      "retailer": "Drummond Golf",
+      "url": "https://drummondgolf.com.au/products/footjoy-mens-25-hyperflex-shoe",
+      "error": "no parser registered for retailer 'Drummond Golf'"
+    },
+    {
+      "product": "Hyperflex",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/footjoy-2025-hyperflex-golf-shoes",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "Fuel",
+      "retailer": "Drummond Golf",
+      "url": "https://drummondgolf.com.au/products/footjoy-mens-25-fj-fuel-shoe",
+      "error": "no parser registered for retailer 'Drummond Golf'"
+    },
+    {
+      "product": "Fuel",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/footjoy-2025-fuel-golf-shoes?variant=46465479934166",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "Flex",
+      "retailer": "Drummond Golf",
+      "url": "https://drummondgolf.com.au/products/footjoy-mens-25-flex-shoe",
+      "error": "no parser registered for retailer 'Drummond Golf'"
+    },
+    {
+      "product": "StaSof",
+      "retailer": "Drummond Golf",
+      "url": "https://drummondgolf.com.au/products/footjoy-stasof-glove?variant=51215421899047",
+      "error": "no parser registered for retailer 'Drummond Golf'"
+    },
+    {
+      "product": "StaSof",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/footjoy-stasof-golf-glove-2023",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "Weathersof",
+      "retailer": "Drummond Golf",
+      "url": "https://drummondgolf.com.au/products/footjoy-weathersof-glove",
+      "error": "no parser registered for retailer 'Drummond Golf'"
+    },
+    {
+      "product": "Weathersof",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/footjoy-weathersof-23-glove",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "Stretch Pique Gingham",
+      "retailer": "Drummond Golf",
+      "url": "https://drummondgolf.com.au/products/footjoy-mens-stretch-pique-trim-polo",
+      "error": "no parser registered for retailer 'Drummond Golf'"
+    },
+    {
+      "product": "Stretch Pique Gingham",
+      "retailer": "House of Golf",
+      "url": "https://houseofgolf.com.au/products/footjoy-2025-stretch-pique-trim-polo-shirt",
+      "error": "no parser registered for retailer 'House of Golf'"
+    },
+    {
+      "product": "Stretch Pique Solid",
+      "retailer": "Drummond Golf",
+      "url": "https://drummondgolf.com.au/products/footjoy-mens-performance-collared-shirt",
+      "error": "no parser registered for retailer 'Drummond Golf'"
+    },
+    {
+      "product": "Hyperflex",
+      "retailer": "The Clubroom",
+      "url": "https://theclubroom.co.nz/products/2025-footjoy-mens-hyperflex-shoes-white-black-red",
+      "error": "no parser registered for retailer 'The Clubroom'"
+    },
+    {
+      "product": "Hyperflex",
+      "retailer": "Golf HQ",
+      "url": "https://golfhq.co.nz/products/footjoy-hyperflex-golf-shoe-whiteblackred",
+      "error": "no parser registered for retailer 'Golf HQ'"
+    },
+    {
+      "product": "Fuel",
+      "retailer": "The Clubroom",
+      "url": "https://theclubroom.co.nz/products/2025-footjoy-mens-fuel-golf-shoes-white-black",
+      "error": "no parser registered for retailer 'The Clubroom'"
+    },
+    {
+      "product": "Fuel",
+      "retailer": "Golf HQ",
+      "url": "https://golfhq.co.nz/products/footjoy-25-fuel-mens-spikeless",
+      "error": "no parser registered for retailer 'Golf HQ'"
+    },
+    {
+      "product": "Fuel",
+      "retailer": "Golf360",
+      "url": "https://golf360.co.nz/products/footjoy-fuel-mens-golf-shoe",
+      "error": "no parser registered for retailer 'Golf360'"
+    },
+    {
+      "product": "StaSof",
+      "retailer": "The Clubroom",
+      "url": "https://theclubroom.co.nz/products/footjoy-stasof-glove",
+      "error": "no parser registered for retailer 'The Clubroom'"
+    },
+    {
+      "product": "StaSof",
+      "retailer": "Golf HQ",
+      "url": "https://golfhq.co.nz/products/footjoy-stasof-mlh",
+      "error": "no parser registered for retailer 'Golf HQ'"
+    },
+    {
+      "product": "StaSof",
+      "retailer": "Golf360",
+      "url": "https://golf360.co.nz/products/fj7800",
+      "error": "no parser registered for retailer 'Golf360'"
+    },
+    {
+      "product": "Weathersof",
+      "retailer": "The Clubroom",
+      "url": "https://theclubroom.co.nz/products/2024-footjoy-weathersof-mens-golf-glove-white",
+      "error": "no parser registered for retailer 'The Clubroom'"
+    },
+    {
+      "product": "Weathersof",
+      "retailer": "Golf HQ",
+      "url": "https://golfhq.co.nz/products/weathersofmlh",
+      "error": "no parser registered for retailer 'Golf HQ'"
+    },
+    {
+      "product": "Weathersof",
+      "retailer": "Golf360",
+      "url": "https://golf360.co.nz/products/fj-mens-weathersoft-glove-mens-left-hand-white",
+      "error": "no parser registered for retailer 'Golf360'"
+    },
+    {
+      "product": "Stretch Pique Gingham",
+      "retailer": "Golf HQ",
+      "url": "https://golfhq.co.nz/products/footjoy-men-s-stretch-pique-gingham-trim-polo-shirt",
+      "error": "no parser registered for retailer 'Golf HQ'"
+    }
+  ]
 }
