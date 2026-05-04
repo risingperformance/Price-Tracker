@@ -1,15 +1,9 @@
 {
-  "timestamp_utc": "2026-05-01T12:18:28Z",
+  "timestamp_utc": "2026-05-03T07:12:57Z",
   "total_urls": 9,
-  "successes": 7,
-  "failures": 2,
+  "successes": 8,
+  "failures": 1,
   "failure_details": [
-    {
-      "product": "Pro/SL",
-      "retailer": "FootJoy",
-      "url": "https://www.footjoy.com.au/en_AU/men/shoes/spikeless/prosl/017PSL.html?dwvar_017PSL_color=56949",
-      "error": "could not extract price from page"
-    },
     {
       "product": "Fuel",
       "retailer": "FootJoy",
