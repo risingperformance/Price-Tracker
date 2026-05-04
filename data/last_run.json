@@ -1,14 +1,7 @@
 {
-  "timestamp_utc": "2026-05-03T07:12:57Z",
-  "total_urls": 9,
+  "timestamp_utc": "2026-05-04T07:46:26Z",
+  "total_urls": 8,
   "successes": 8,
-  "failures": 1,
-  "failure_details": [
-    {
-      "product": "Fuel",
-      "retailer": "FootJoy",
-      "url": "https://www.footjoy.com.au/en_AU/men/shoes/spikeless/fuel/008FJF.html?dwvar_008FJF_color=55417",
-      "error": "could not extract price from page"
-    }
-  ]
+  "failures": 0,
+  "failure_details": []
 }
