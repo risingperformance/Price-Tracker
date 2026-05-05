@@ -397,6 +397,99 @@ def _extract_datalayer_product(html: str) -> Optional[dict]:
         idx = brace + 1
 
 
+def _extract_shopify_price_amount(html: str) -> Optional[dict]:
+    """Shopify storefronts (e.g. theclubroom.co.nz) embed the product price in
+    the web-pixels-manager init block as
+        "price":{"amount":329.95,"currencyCode":"NZD"}
+    The first occurrence is the main product / first variant. The same page
+    also carries a `"price":32995` (cents) form which we deliberately do NOT
+    match, because it is ambiguous against unrelated integer "price" keys."""
+    m = re.search(
+        r'"price"\s*:\s*\{\s*"amount"\s*:\s*([\d.]+)\s*,\s*"currencyCode"\s*:\s*"([A-Z]{3})"',
+        html,
+    )
+    if not m:
+        return None
+    price = _to_float(m.group(1))
+    if price is None:
+        return None
+    return {
+        "price": price,
+        "currency": m.group(2).upper(),
+        "in_stock": True,
+        "on_sale": False,
+        "price_was": None,
+    }
+
+
+def _extract_shopify_analytics_price(html: str) -> Optional[dict]:
+    """Older Shopify themes (e.g. golfhq.co.nz) emit a Shopify Analytics
+    "Viewed Product" track call:
+        ShopifyAnalytics.lib.track("Viewed Product",{"currency":"NZD",...,
+            "price":"329.00", "sku":"...", ...})
+    The wrapping object contains only primitive values, so a non-greedy
+    `[^}]*?` between fields is safe."""
+    m = re.search(
+        r'track\(\s*"Viewed Product"\s*,\s*\{[^}]*?'
+        r'"currency"\s*:\s*"([A-Z]{3})"[^}]*?'
+        r'"price"\s*:\s*"([\d.]+)"',
+        html,
+    )
+    if not m:
+        # Fallback: price first, then currency.
+        m = re.search(
+            r'track\(\s*"Viewed Product"\s*,\s*\{[^}]*?'
+            r'"price"\s*:\s*"([\d.]+)"[^}]*?'
+            r'"currency"\s*:\s*"([A-Z]{3})"',
+            html,
+        )
+        if not m:
+            return None
+        price_s, currency = m.group(1), m.group(2)
+    else:
+        currency, price_s = m.group(1), m.group(2)
+    price = _to_float(price_s)
+    if price is None:
+        return None
+    return {
+        "price": price,
+        "currency": currency.upper(),
+        "in_stock": True,
+        "on_sale": False,
+        "price_was": None,
+    }
+
+
+def _extract_house_of_golf_item(html: str) -> Optional[dict]:
+    """House of Golf renders a `var item = { ... Price: "$X", Value: "X.XX",
+    CompareAtPrice: "$Y", ... };` JS literal on every product page. `Value`
+    is the unformatted numeric we want; `CompareAtPrice` (when nonzero) is
+    the strike-through "was" price."""
+    m = re.search(
+        r"\bvar\s+item\s*=\s*\{[\s\S]*?\bValue\s*:\s*\"([\d.]+)\"",
+        html,
+    )
+    if not m:
+        return None
+    price = _to_float(m.group(1))
+    if price is None:
+        return None
+    # Look for CompareAtPrice within the same `item` block (best-effort).
+    cap_m = re.search(
+        r"\bvar\s+item\s*=\s*\{[\s\S]*?\bCompareAtPrice\s*:\s*\"\$?([\d.,]+)\"",
+        html,
+    )
+    price_was = _to_float(cap_m.group(1)) if cap_m else None
+    on_sale = price_was is not None and price_was > 0 and price_was > price
+    return {
+        "price": price,
+        "currency": "AUD",
+        "in_stock": True,
+        "on_sale": on_sale,
+        "price_was": price_was if on_sale else None,
+    }
+
+
 def _extract_meta_price(soup: BeautifulSoup) -> Optional[dict]:
     """Some themes expose the price via Open Graph or schema.org meta tags.
 
@@ -497,10 +590,46 @@ def parse_footjoy(html: str) -> Optional[dict]:
     return None
 
 
+def parse_shopify(html: str) -> Optional[dict]:
+    """Generic Shopify-storefront parser used by Drummond Golf (.com.au) and
+    the NZ retailers (The Clubroom, Golf HQ, Golf 360). Tries, in order:
+        1. JSON-LD Product/Offer (Dawn theme + Golf 360 ProductGroup)
+        2. Open Graph meta tags (og:price:amount + og:price:currency, used by
+           Drummond Golf)
+        3. web-pixels-manager `"price":{"amount":..,"currencyCode":".."}`
+           (The Clubroom)
+        4. Legacy ShopifyAnalytics "Viewed Product" track call (Golf HQ)
+    """
+    return (
+        parse_jsonld(html)
+        or _extract_meta_price(BeautifulSoup(html, "lxml"))
+        or _extract_shopify_price_amount(html)
+        or _extract_shopify_analytics_price(html)
+    )
+
+
+def parse_house_of_golf(html: str) -> Optional[dict]:
+    """House of Golf (.com.au) puts the price in a `var item = { ... }` JS
+    object. JSON-LD also exists on most pages and is preferred when present
+    because it gives us currency + sale signal cleanly."""
+    return (
+        parse_jsonld(html)
+        or _extract_house_of_golf_item(html)
+        or _extract_meta_price(BeautifulSoup(html, "lxml"))
+    )
+
+
 RETAILER_PARSERS = {
     "golf box": parse_golfbox,
     "on course": parse_oncourse,
     "footjoy": parse_footjoy,
+    "drummond golf": parse_shopify,
+    "house of golf": parse_house_of_golf,
+    "the clubroom": parse_shopify,
+    "golf hq": parse_shopify,
+    "the golf hq": parse_shopify,  # alias used in the "Where to find price" tab
+    "golf360": parse_shopify,
+    "golf 360": parse_shopify,     # alias used in the "Where to find price" tab
 }
 
 

@@ -1,6 +1,6 @@
 # FootJoy AU Competitive Price Tracker
 
-Daily scrape of golf shoe prices across Australian retailers (Golf Box, On Course, FootJoy AU), surfaced as a static dashboard hosted on GitHub Pages. Everything runs from this repo: GitHub Actions does the daily scrape, commits the data file back to the repo, and the dashboard reads that file.
+Daily scrape of golf prices across Australian and New Zealand retailers (Golf Box, On Course, Drummond Golf, House of Golf, The Clubroom, Golf HQ, Golf 360, plus FootJoy AU when reachable), surfaced as a static dashboard hosted on GitHub Pages. Everything runs from this repo: GitHub Actions does the daily scrape, commits the data file back to the repo, and the dashboard reads that file.
 
 ```
 .
@@ -50,11 +50,16 @@ The script reads `Price Tracker Sheet.xlsx`, scrapes each URL, and updates `data
 
 ## How the parsers work today
 
-| Retailer  | Method                                                                                  | Failure mode                                              |
-| --------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Golf Box  | `<script type="application/ld+json">` → `offers.price`, fallback regex on `"price":...` | If the site moves to client-side-only rendering, Playwright fallback kicks in. |
-| On Course | Same JSON-LD pattern as Golf Box                                                        | Same.                                                     |
-| FootJoy AU | `.product-price .price-sales` (and `.price-standard` when on sale)                     | If FootJoy changes class names, edit the selector in `parse_footjoy`. |
+| Retailer       | Method                                                                                                          | Failure mode                                                                                       |
+| -------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Golf Box       | JSON-LD `offers.price`, then `og:price:amount` meta, then a regex fallback                                      | If the site moves to client-side-only rendering, the Playwright fallback kicks in.                 |
+| On Course      | Same JSON-LD pattern as Golf Box                                                                                | Same.                                                                                              |
+| FootJoy AU     | `dataLayer.push({event:"productView", ...})`, then `og:price:amount` meta, then JSON-LD                         | Currently fails on the GitHub Actions runner — suspected geo-block / Cloudflare challenge.         |
+| Drummond Golf  | Shopify chain: JSON-LD → `og:price:amount` meta → web-pixels-manager `"price":{"amount":...}` → analytics track | If Drummond changes themes, the meta tag pattern is the most stable fallback.                      |
+| House of Golf  | JSON-LD → custom `var item = { ... Value: "X.XX", CompareAtPrice: "$Y" ...}` JS object                          | If House of Golf renames the JS variable, edit `_extract_house_of_golf_item`.                      |
+| The Clubroom   | Shopify chain (same as Drummond Golf); web-pixels-manager `"price":{"amount":...}` is the typical hit           | NZ store, expect NZD prices.                                                                       |
+| Golf HQ        | Shopify chain; legacy `ShopifyAnalytics.lib.track("Viewed Product", ...)` is the typical hit                    | NZ store, expect NZD prices.                                                                       |
+| Golf 360       | Shopify chain; JSON-LD `ProductGroup` with `hasVariant[*].offers` is the typical hit                            | NZ store, expect NZD prices.                                                                       |
 
 When the static-HTML pass cannot find a price, the scraper retries with Playwright (headless Chromium) which executes JavaScript. If both fail and there is a previous price for that (Product, Retailer), the scraper records a `carry_forward` row with `in_stock: false` and the previous price, so the chart line stays continuous and the tooltip flags the issue. If there is no prior price, the URL is logged as a hard failure in `data/last_run.json`.
 
